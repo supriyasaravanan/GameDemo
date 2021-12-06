@@ -7,6 +7,8 @@ import java.util.Map;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -15,6 +17,9 @@ import org.springframework.web.bind.annotation.RestController;
 import com.localme.api.dao.CategoryRepo;
 import com.localme.api.dao.GameRepo;
 import com.localme.api.dao.UserRepo;
+import com.localme.api.exception.BusinessException;
+import com.localme.api.exception.ControllerException;
+import com.localme.api.exception.ErrorDetails;
 import com.localme.api.service.CategoryService;
 import com.localme.api.service.GameService;
 import com.localme.api.utils.EncryptDecryptUtil;
@@ -48,7 +53,7 @@ public class UserController {
 	
 	 Logger logger = LoggerFactory.getLogger(UserController.class);
 	
-	@PostMapping("/getUser")
+	/*@PostMapping("/getUser")
 	public Map<String, Object> getUser(@RequestBody UserLoginVO uservo) {
 		logger.trace("Entering method get user");
 		logger.debug("Logged in user:"+uservo.getUsername());
@@ -97,21 +102,19 @@ public class UserController {
 	
 	
 	@PostMapping("/addGame")
-	public Map<String, Object> addGame(@RequestBody GameDetail gamevo) {
+	public ResponseEntity<?> addGame(@RequestBody GameDetail gamedetail){
+		GameDetail gameDetail1 = gameRepo.findByname(gamedetail.getName());
 		
-		Map<String, Object> result = new HashMap<String,Object>();
-		GameDetail gameDetail = gameRepo.findByname(gamevo.getName());
-	if(gameDetail == null )
-		{
-		GameDetail restultvo = gameRepo.save(gamevo);
-		result.put("STATUS", "SUCCESS");
-		result.put("DATA", restultvo);
+		try {
+			GameDetail employeeSaved = gameService.addGame(gamedetail);
+			return new ResponseEntity<GameDetail>(employeeSaved, HttpStatus.CREATED);
+		}catch (BusinessException e) {
+			ControllerException ce = new ControllerException(e.getErrorCode(),e.getErrorMessage());
+			return new ResponseEntity<ControllerException>(ce, HttpStatus.BAD_REQUEST);
+		}catch (Exception e) {
+			ControllerException ce = new ControllerException("611","Something went wrong in controller");
+			return new ResponseEntity<ControllerException>(ce, HttpStatus.BAD_REQUEST);
 		}
-	else {
-		result.put("STATUS","FAILURE");
-		
-	}
-		return result;
 	}
 	
 	@PostMapping("/getGame")
@@ -123,12 +126,83 @@ public class UserController {
 			logger.error("game not found");
 			result.put("STATUS", "FAILURE");
 			result.put("ERROR", "GAME NOT FOUND");
+		
 		}else {
 			result.put("STATUS", "SUCCESS");
 			result.put("DATA", gameDetail);
 			}
 		return result;
-	}
+	}*/
+	 
+	 @PostMapping("/addGame")
+		public ResponseEntity<?> addGame(@RequestBody GameDetail gamedetail){
+			if(gamedetail.getName().isEmpty() || gamedetail.getName().length() == 0 )
+			{
+				ErrorDetails errorDetails = new ErrorDetails(400,"Enter the valid username");
+			    return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorDetails);			
+			}
+			
+			try 
+			{
+				GameDetail employeeSaved = gameService.addGame(gamedetail);
+				return new ResponseEntity<GameDetail>(employeeSaved, HttpStatus.CREATED);
+		    }
+			catch (Exception e) 
+			{
+				ErrorDetails errorDetails = new ErrorDetails(400,"Already Present");
+				return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorDetails);
+			}
+			
+		}
+		
+		
+		@PostMapping("/addUser")
+		public ResponseEntity<?> addUser(@RequestBody UserDetailsVO userdetail){
+			if(userdetail.getUid().isEmpty() || userdetail.getUid().length() == 0 )
+			{
+				ErrorDetails errorDetails = new ErrorDetails(400,"Enter the valid name");
+			    return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorDetails);			
+			}
+			try {
+				UserDetailsVO employeeSaved = gameService.addUser(userdetail);
+				return new ResponseEntity<UserDetailsVO>(employeeSaved, HttpStatus.CREATED);
+				}
+			catch (Exception e) {
+				ErrorDetails errorDetails = new ErrorDetails(400,"Already Present");
+				return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorDetails);
+			}
+			
+		}
+		
+		@PostMapping("/getGame")
+		public ResponseEntity<?>  getGame(@RequestBody GameList gamedetails) {
+			logger.trace("Entering method get Game");
+			try 
+			{
+				GameDetail gameFind=gameService.getGame(gamedetails);
+				return new ResponseEntity<GameDetail>(gameFind, HttpStatus.OK);
+			
+			}catch (Exception e) {
+				ErrorDetails errorDetails = new ErrorDetails(400,"Not present");
+				return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorDetails);
+			}
+			
+			
+		}	
+		
+		@PostMapping("/getUser")
+		public ResponseEntity<?>  getUser(@RequestBody UserLoginVO userdetails) {
+			logger.trace("Entering method get User");
+			try 
+			{
+				UserDetailsVO gameFind=gameService.getUser(userdetails);
+				return new ResponseEntity<UserDetailsVO>(gameFind, HttpStatus.OK);
+			}catch (Exception e) {
+				ErrorDetails errorDetails = new ErrorDetails(400,"Not present");
+				return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorDetails);
+			}
+				
+		}	
 	
 	@PostMapping("/addCat")
 	public Map<String, Object> addCat(@RequestBody Category gamevo) {
@@ -149,9 +223,9 @@ public class UserController {
 	}
 	
 	@GetMapping("/findGameForCategory/{name}")
-	 List<GameDetail> findGamesForCategory(@PathVariable String name) {
+	 public List<GameDetail> findGamesForCategory(@PathVariable String name) {
 		logger.trace("Entering method");
-	   return gameService.findGamesForCategory(name);
+			   return gameService.findGamesForCategory(name);
 	 } 
 	@GetMapping("/findAllCategories")
 	 Iterable<Category> findAllCategories() {
