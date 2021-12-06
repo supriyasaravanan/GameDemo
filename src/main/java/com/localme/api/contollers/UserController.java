@@ -138,7 +138,7 @@ public class UserController {
 		public ResponseEntity<?> addGame(@RequestBody GameDetail gamedetail){
 			if(gamedetail.getName().isEmpty() || gamedetail.getName().length() == 0 )
 			{
-				ErrorDetails errorDetails = new ErrorDetails(400,"Enter the valid username");
+				ErrorDetails errorDetails = new ErrorDetails(400,"Enter the valid gamename");
 			    return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorDetails);			
 			}
 			
@@ -160,7 +160,7 @@ public class UserController {
 		public ResponseEntity<?> addUser(@RequestBody UserDetailsVO userdetail){
 			if(userdetail.getUid().isEmpty() || userdetail.getUid().length() == 0 )
 			{
-				ErrorDetails errorDetails = new ErrorDetails(400,"Enter the valid name");
+				ErrorDetails errorDetails = new ErrorDetails(400,"Enter the valid username");
 			    return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorDetails);			
 			}
 			try {
